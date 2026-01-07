@@ -21,6 +21,7 @@ const questions = [
 const QUIZ_SIZE = 10;
 let currentLevel = 1;
 let scores = { 1: null, 2: null };
+let selectedQuestions = [];
 let userAnswers = {};
 
 function shuffleArray(array) {
@@ -37,6 +38,9 @@ function startLevel(level) {
     document.getElementById('levels-screen').style.display = 'none';
     document.getElementById('back-btn').style.display = 'block';
 
+    selectedQuestions = shuffleArray(questions).slice(0, QUIZ_SIZE);
+    userAnswers = {};
+
     const container = document.getElementById('quiz-container');
     container.innerHTML = `
         <div class="quiz-screen active">
@@ -49,19 +53,18 @@ function startLevel(level) {
         </div>
     `;
 
-    initQuiz(level);
-    document.getElementById('submit').addEventListener('click', () => evaluateQuiz(level));
+    renderQuiz();
+    document.getElementById('submit').addEventListener('click', checkAnswers);
 }
 
-function initQuiz(level) {
-    const selectedQuestions = shuffleArray(questions).slice(0, QUIZ_SIZE);
-    userAnswers = {};
+function renderQuiz() {
     const quizDiv = document.getElementById('quiz');
     quizDiv.innerHTML = '';
 
     selectedQuestions.forEach((q, i) => {
         const qDiv = document.createElement('div');
         qDiv.className = 'question';
+        qDiv.id = `q-${i}`;
         qDiv.innerHTML = `<h3>${i + 1}. ${q.question}</h3>`;
 
         const optionsDiv = document.createElement('div');
@@ -75,6 +78,7 @@ function initQuiz(level) {
                 optionsDiv.querySelectorAll('.option').forEach(el => el.classList.remove('selected'));
                 optDiv.classList.add('selected');
                 userAnswers[i] = opt;
+                qDiv.classList.remove('missing');
             };
             optionsDiv.appendChild(optDiv);
         });
@@ -84,81 +88,106 @@ function initQuiz(level) {
     });
 }
 
-function evaluateQuiz(level) {
-    const answered = Object.keys(userAnswers).length;
-    if (answered < QUIZ_SIZE) {
-        alert('Veuillez répondre à toutes les questions !');
+function checkAnswers() {
+    // Réinitialiser les styles
+    document.querySelectorAll('.question').forEach(q => q.classList.remove('missing'));
+    document.getElementById('result').innerHTML = '';
+
+    const missing = [];
+    for (let i = 0; i < QUIZ_SIZE; i++) {
+        if (userAnswers[i] === undefined) {
+            missing.push(i + 1);
+            document.getElementById(`q-${i}`).classList.add('missing');
+        }
+    }
+
+    if (missing.length > 0) {
+        const last = missing.pop();
+        let msg = `<div class="warning-message">
+            ⚠️ Vous n'avez pas répondu à la${missing.length > 0 ? 's' : ''} question${missing.length > 1 ? 's' : ''} :
+            <strong>${missing.length > 0 ? missing.join(', ') + ' et ' : ''}${last}</strong>
+        </div>`;
+        document.getElementById('result').innerHTML = msg;
         return;
     }
 
+    // Toutes les réponses sont données → correction
     let score = 0;
-    const allOptions = document.querySelectorAll('.option');
-    allOptions.forEach(opt => {
-        opt.classList.remove('correct', 'incorrect', 'selected');
-    });
-
-    document.querySelectorAll('.question').forEach((q, i) => {
-        const selected = userAnswers[i];
-        const correct = questions.find(qq => qq.question === q.querySelector('h3').textContent.slice(3)).answer;
-        q.querySelectorAll('.option').forEach(opt => {
-            if (opt.textContent === correct) opt.classList.add('correct');
-            if (opt.textContent === selected && selected !== correct) opt.classList.add('incorrect');
+    selectedQuestions.forEach((q, i) => {
+        const userChoice = userAnswers[i];
+        const options = document.querySelectorAll(`#q-${i} .option`);
+        options.forEach(opt => {
+            opt.classList.remove('selected');
+            if (opt.textContent === q.answer) opt.classList.add('correct');
+            if (opt.textContent === userChoice && userChoice !== q.answer) opt.classList.add('incorrect');
         });
-        if (selected === correct) score++;
+        if (userChoice === q.answer) score++;
     });
 
-    scores[level] = score;
+    scores[currentLevel] = score;
+
+    let nextBtnText = currentLevel === 1 ? "Passer au Level 2" : "Voir le récapitulatif final";
+    let nextAction = currentLevel === 1 ? () => startLevel(2) : showFinalRecap;
 
     document.getElementById('result').innerHTML = `
-        <h2>Votre score : ${score} / 10</h2>
-        <p><strong>${(score / 10 * 100).toFixed(0)}%</strong> de bonnes réponses</p>
-        <button id="continue-btn">Continuer vers le niveau suivant</button>
-    `;
-
-    document.getElementById('submit').style.display = 'none';
-
-    if (level < 3) {
-        document.getElementById('continue-btn').onclick = () => {
-            if (level === 1) {
-                document.getElementById('level2').classList.remove('disabled');
-            }
-            startLevel(level + 1);
-        };
-    } else {
-        document.getElementById('continue-btn').textContent = 'Voir le récapitulatif final';
-        document.getElementById('continue-btn').onclick = showRecap;
-    }
-}
-
-function showRecap() {
-    document.getElementById('quiz-container').innerHTML = `
-        <div class="quiz-screen active" style="text-align:center; padding:80px;">
-            <h2>Récapitulatif final</h2>
-            <p style="font-size:2rem; margin:40px 0;">Score Level 1 : <strong>${scores[1] || 0}/10</strong></p>
-            <p style="font-size:2rem; margin:40px 0;">Score Level 2 : <strong>${scores[2] || 0}/10</strong></p>
-            <p style="font-size:1.6rem; margin:40px 0;">
-                Score total : <strong>${(scores[1] || 0) + (scores[2] || 0)} / 20</strong>
-            </p>
-            <button id="reset-btn">Recommencer le quiz</button>
+        <div style="background:white; padding:40px; border-radius:14px; box-shadow:0 4px 12px rgba(0,0,0,0.05);">
+            <h2>Votre score Level ${currentLevel}</h2>
+            <p style="font-size:3rem; margin:30px 0; font-weight:800;">${score} / 10 points</p>
+            <p style="font-size:1.4rem; color:#555;">${(score * 10)}% de bonnes réponses</p>
+            <div class="actions" style="margin-top:40px;">
+                <button id="next-level">${nextBtnText}</button>
+                <button class="secondary" onclick="location.reload()">Recommencer</button>
+            </div>
         </div>
     `;
-    document.getElementById('reset-btn').onclick = () => location.reload();
+
+    document.getElementById('next-level').onclick = () => {
+        if (currentLevel === 1) {
+            document.getElementById('level2').classList.remove('disabled');
+        }
+        nextAction();
+    };
+
+    document.getElementById('submit').style.display = 'none';
 }
 
+function showFinalRecap() {
+    document.getElementById('quiz-container').innerHTML = `
+        <div class="quiz-screen active" style="text-align:center; padding:80px;">
+            <h2 style="font-size:2.8rem; margin-bottom:40px;">Récapitulatif final</h2>
+            <p style="font-size:2.2rem; margin:40px 0;">
+                Level 1 : <strong>${scores[1] || 0}/10</strong> points
+            </p>
+            <p style="font-size:2.2rem; margin:40px 0;">
+                Level 2 : <strong>${scores[2] || 0}/10</strong> points
+            </p>
+            <p style="font-size:2.8rem; margin:60px 0; font-weight:800;">
+                Score total : <strong>${(scores[1] || 0) + (scores[2] || 0)} / 20</strong>
+            </p>
+            <div class="actions">
+                <button onclick="location.reload()">Rejouer le quiz</button>
+            </div>
+        </div>
+    `;
+}
+
+// Navigation
 document.getElementById('back-btn').addEventListener('click', () => {
     document.getElementById('quiz-container').innerHTML = '';
     document.getElementById('levels-screen').style.display = 'flex';
     document.getElementById('back-btn').style.display = 'none';
 });
 
-document.getElementById('level1').addEventListener('click', () => {
-    if (!document.getElementById('level1').classList.contains('disabled')) {
-        startLevel(1);
-    }
-});
+document.getElementById('level1').addEventListener('click', () => startLevel(1));
 
 document.getElementById('level2').addEventListener('click', () => {
     if (!document.getElementById('level2').classList.contains('disabled')) {
         startLevel(2);
+    }
+});
+
+document.getElementById('level3').addEventListener('click', () => {
+    if (scores[1] !== null && scores[2] !== null) {
+        showFinalRecap();
     }
 });
