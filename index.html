@@ -4,7 +4,302 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quiz Notion</title>
-    <link rel="stylesheet" href="style.css">
+    <style>
+        :root {
+    --bg: #F1EDE5FF;
+    --card-bg: #f8f9fa;
+    --text: #111111;
+    --text-light: #555555;
+    --accent: #000000;
+    --bar-color: #cccccc;
+    --bar-glow: #ffffff;
+    --shadow: 0 12px 32px rgba(0,0,0,0.08);
+    --border-radius: 16px;
+    --warning-bg: #fff3cd;
+    --warning-border: #ffc107;
+    --danger: #dc3545;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    margin: 0;
+    padding: 40px 20px;
+    min-height: 100vh;
+}
+
+.container {
+    max-width: 1000px;
+    margin: 0 auto;
+    position: relative;
+}
+
+.back-btn {
+    position: absolute;
+    left: 20px;
+    top: 20px;
+    background: none;
+    border: none;
+    font-size: 1.1rem;
+    color: var(--text-light);
+    cursor: pointer;
+    display: none;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 60px;
+}
+
+.logo {
+    font-size: 1.4rem;
+    margin-bottom: 16px;
+    opacity: 0.7;
+    letter-spacing: 4px;
+}
+
+h1 {
+    font-size: 3rem;
+    font-weight: 800;
+    margin: 0 0 12px;
+}
+
+.subtitle {
+    font-size: 1.3rem;
+    color: var(--text-light);
+    font-weight: 500;
+}
+
+.levels {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    flex-wrap: wrap;
+}
+
+.level-card {
+    background: var(--card-bg);
+    border-radius: var(--border-radius);
+    padding: 32px;
+    width: 300px;
+    text-align: center;
+    box-shadow: var(--shadow);
+    transition: all 0.4s ease;
+    cursor: pointer;
+}
+
+.level-card:hover:not(.disabled) {
+    transform: translateY(-12px);
+}
+
+.level-card.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.level-title {
+    font-size: 1.1rem;
+    color: var(--text-light);
+    margin-bottom: 10px;
+}
+
+.level-desc {
+    font-size: 1.35rem;
+    font-weight: 600;
+    margin-bottom: 32px;
+    line-height: 1.4;
+}
+
+.bar-container {
+    position: relative;
+    height: 280px;
+    margin: 0 auto 20px;
+}
+
+.bar-3d {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90px;
+    background: linear-gradient(to top, var(--bar-color), var(--bar-glow));
+    border-radius: 10px 10px 0 0;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+}
+
+.bar-label {
+    position: absolute;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 4.5rem;
+    font-weight: 800;
+    color: var(--text);
+}
+
+.tag {
+    display: inline-block;
+    background: var(--accent);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 30px;
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+/* Quiz screens */
+.quiz-screen {
+    display: none;
+    background: var(--card-bg);
+    border-radius: var(--border-radius);
+    padding: 50px;
+    box-shadow: var(--shadow);
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.quiz-screen.active {
+    display: block;
+}
+
+.progress-info {
+    text-align: center;
+    font-size: 1.3rem;
+    color: var(--text-light);
+    margin-bottom: 40px;
+    font-weight: 600;
+}
+
+#quiz {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+}
+
+.question {
+    background: white;
+    padding: 24px;
+    border-radius: 14px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.question.missing {
+    border-color: var(--danger);
+    background: #fff5f5;
+    box-shadow: 0 0 0 3px rgba(220,53,69,0.1);
+}
+
+.question h3 {
+    font-size: 1.4rem;
+    margin: 0 0 20px;
+    text-align: center;
+    font-weight: 600;
+}
+
+.options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 14px;
+}
+
+.option {
+    padding: 18px;
+    background: #f0f0f0;
+    border-radius: 12px;
+    text-align: center;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.option:hover {
+    background: #e0e0e0;
+    transform: translateY(-3px);
+}
+
+.option.selected {
+    background: var(--accent);
+    color: white;
+    font-weight: 600;
+}
+
+.option.correct {
+    background: #d1fae5;
+    border: 2px solid #10b981;
+    color: #065f46;
+}
+
+.option.incorrect {
+    background: #fee2e2;
+    border: 2px solid var(--danger);
+    color: #991b1b;
+}
+
+.actions {
+    text-align: center;
+    margin: 50px 0 30px;
+}
+
+button {
+    padding: 16px 40px;
+    font-size: 1.2rem;
+    font-weight: 600;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: 0.3s ease;
+    margin: 0 10px;
+}
+
+button:hover {
+    background: #333;
+    transform: translateY(-2px);
+}
+
+button.secondary {
+    background: #6c757d;
+}
+
+button.secondary:hover {
+    background: #54595f;
+}
+
+#result {
+    text-align: center;
+    padding: 40px;
+    font-size: 1.6rem;
+    font-weight: 600;
+    background: white;
+    border-radius: 14px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.warning-message {
+    background: var(--warning-bg);
+    border: 1px solid var(--warning-border);
+    color: #856404;
+    padding: 20px;
+    border-radius: 12px;
+    margin: 30px 0;
+    font-weight: 600;
+    text-align: center;
+}
+
+@media (max-width: 768px) {
+    .levels { flex-direction: column; align-items: center; }
+    .level-card { width: 100%; max-width: 340px; }
+    h1 { font-size: 2.4rem; }
+    .options { grid-template-columns: 1fr; }
+    .actions button { display: block; width: 100%; margin: 10px 0; }
+}
+    </style>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -54,6 +349,200 @@
         <div id="quiz-container"></div>
     </div>
 
-    <script src="script.js"></script>
+    <script >
+        const questions = [
+    { question: "Quelle est la capitale de l'Espagne ?", options: ["Berlin", "Madrid", "Lisbonne", "Rome"], answer: "Madrid" },
+    { question: "Quelle est la couleur du ciel par temps clair ?", options: ["Rouge", "Bleu", "Vert", "Jaune"], answer: "Bleu" },
+    { question: "Quel est le symbole chimique de l'eau ?", options: ["O2", "H2O", "CO2", "NaCl"], answer: "H2O" },
+    { question: "Quelle est la plus grande planète du système solaire ?", options: ["Terre", "Mars", "Jupiter", "Saturne"], answer: "Jupiter" },
+    { question: "Quel langage gère l'interactivité sur une page web ?", options: ["HTML", "CSS", "JavaScript", "PHP"], answer: "JavaScript" },
+    { question: "Quel langage stylise les pages web ?", options: ["HTML", "JavaScript", "CSS", "Python"], answer: "CSS" },
+    { question: "Quel est le plus grand pays du monde en superficie ?", options: ["Canada", "Russie", "Chine", "États-Unis"], answer: "Russie" },
+    { question: "En quelle année est tombé le mur de Berlin ?", options: ["1987", "1991", "1989", "1993"], answer: "1989" },
+    { question: "Combien y a-t-il de continents sur Terre ?", options: ["5", "6", "7", "8"], answer: "7" },
+    { question: "Quel pays a remporté la Coupe du monde 2018 ?", options: ["Brésil", "Angleterre", "France", "Argentine"], answer: "France" },
+    { question: "Qui a découvert l'Amérique en 1492 ?", options: ["Magellan", "Christophe Colomb", "Vasco de Gama", "Marco Polo"], answer: "Christophe Colomb" },
+    { question: "Quel est le plus long fleuve d'Afrique ?", options: ["Congo", "Nil", "Niger", "Zambeze"], answer: "Nil" },
+    { question: "Quel est le plus grand mammifère terrestre ?", options: ["Girafe", "Éléphant", "Rhinocéros", "Hippopotame"], answer: "Éléphant" },
+    { question: "Quel est le plus grand lac d'Afrique ?", options: ["Lac Tanganyika", "Lac Malawi", "Lac Victoria", "Lac Tchad"], answer: "Lac Victoria" },
+    { question: "Quel protocole transfère des fichiers sur Internet ?", options: ["HTTP", "DNS", "FTP", "SMTP"], answer: "FTP" },
+    { question: "Quelle particule a une charge positive ?", options: ["Électron", "Proton", "Neutron", "Photon"], answer: "Proton" },
+    { question: "Quelle molécule est essentielle à la photosynthèse ?", options: ["Hémoglobine", "ADN", "Chlorophylle", "ARN"], answer: "Chlorophylle" }
+];
+
+const QUIZ_SIZE = 10;
+let currentLevel = 1;
+let scores = { 1: null, 2: null };
+let selectedQuestions = [];
+let userAnswers = {};
+
+function shuffleArray(array) {
+    const arr = [...array];
+    for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+}
+
+function startLevel(level) {
+    currentLevel = level;
+    document.getElementById('levels-screen').style.display = 'none';
+    document.getElementById('back-btn').style.display = 'block';
+
+    selectedQuestions = shuffleArray(questions).slice(0, QUIZ_SIZE);
+    userAnswers = {};
+
+    const container = document.getElementById('quiz-container');
+    container.innerHTML = `
+        <div class="quiz-screen active">
+            <div class="progress-info">Level ${level} • 10 questions • 1 point par bonne réponse</div>
+            <div id="quiz"></div>
+            <div class="actions">
+                <button id="submit">Vérifier mes réponses</button>
+            </div>
+            <div id="result"></div>
+        </div>
+    `;
+
+    renderQuiz();
+    document.getElementById('submit').addEventListener('click', checkAnswers);
+}
+
+function renderQuiz() {
+    const quizDiv = document.getElementById('quiz');
+    quizDiv.innerHTML = '';
+
+    selectedQuestions.forEach((q, i) => {
+        const qDiv = document.createElement('div');
+        qDiv.className = 'question';
+        qDiv.id = `q-${i}`;
+        qDiv.innerHTML = `<h3>${i + 1}. ${q.question}</h3>`;
+
+        const optionsDiv = document.createElement('div');
+        optionsDiv.className = 'options';
+
+        q.options.forEach(opt => {
+            const optDiv = document.createElement('div');
+            optDiv.className = 'option';
+            optDiv.textContent = opt;
+            optDiv.onclick = () => {
+                optionsDiv.querySelectorAll('.option').forEach(el => el.classList.remove('selected'));
+                optDiv.classList.add('selected');
+                userAnswers[i] = opt;
+                qDiv.classList.remove('missing');
+            };
+            optionsDiv.appendChild(optDiv);
+        });
+
+        qDiv.appendChild(optionsDiv);
+        quizDiv.appendChild(qDiv);
+    });
+}
+
+function checkAnswers() {
+    // Réinitialiser les styles
+    document.querySelectorAll('.question').forEach(q => q.classList.remove('missing'));
+    document.getElementById('result').innerHTML = '';
+
+    const missing = [];
+    for (let i = 0; i < QUIZ_SIZE; i++) {
+        if (userAnswers[i] === undefined) {
+            missing.push(i + 1);
+            document.getElementById(`q-${i}`).classList.add('missing');
+        }
+    }
+
+    if (missing.length > 0) {
+        const last = missing.pop();
+        let msg = `<div class="warning-message">
+            ⚠️ Vous n'avez pas répondu à la${missing.length > 0 ? 's' : ''} question${missing.length > 1 ? 's' : ''} :
+            <strong>${missing.length > 0 ? missing.join(', ') + ' et ' : ''}${last}</strong>
+        </div>`;
+        document.getElementById('result').innerHTML = msg;
+        return;
+    }
+
+    // Toutes les réponses sont données → correction
+    let score = 0;
+    selectedQuestions.forEach((q, i) => {
+        const userChoice = userAnswers[i];
+        const options = document.querySelectorAll(`#q-${i} .option`);
+        options.forEach(opt => {
+            opt.classList.remove('selected');
+            if (opt.textContent === q.answer) opt.classList.add('correct');
+            if (opt.textContent === userChoice && userChoice !== q.answer) opt.classList.add('incorrect');
+        });
+        if (userChoice === q.answer) score++;
+    });
+
+    scores[currentLevel] = score;
+
+    let nextBtnText = currentLevel === 1 ? "Passer au Level 2" : "Voir le récapitulatif final";
+    let nextAction = currentLevel === 1 ? () => startLevel(2) : showFinalRecap;
+
+    document.getElementById('result').innerHTML = `
+        <div style="background:white; padding:40px; border-radius:14px; box-shadow:0 4px 12px rgba(0,0,0,0.05);">
+            <h2>Votre score Level ${currentLevel}</h2>
+            <p style="font-size:3rem; margin:30px 0; font-weight:800;">${score} / 10 points</p>
+            <p style="font-size:1.4rem; color:#555;">${(score * 10)}% de bonnes réponses</p>
+            <div class="actions" style="margin-top:40px;">
+                <button id="next-level">${nextBtnText}</button>
+                <button class="secondary" onclick="location.reload()">Recommencer</button>
+            </div>
+        </div>
+    `;
+
+    document.getElementById('next-level').onclick = () => {
+        if (currentLevel === 1) {
+            document.getElementById('level2').classList.remove('disabled');
+        }
+        nextAction();
+    };
+
+    document.getElementById('submit').style.display = 'none';
+}
+
+function showFinalRecap() {
+    document.getElementById('quiz-container').innerHTML = `
+        <div class="quiz-screen active" style="text-align:center; padding:80px;">
+            <h2 style="font-size:2.8rem; margin-bottom:40px;">Récapitulatif final</h2>
+            <p style="font-size:2.2rem; margin:40px 0;">
+                Level 1 : <strong>${scores[1] || 0}/10</strong> points
+            </p>
+            <p style="font-size:2.2rem; margin:40px 0;">
+                Level 2 : <strong>${scores[2] || 0}/10</strong> points
+            </p>
+            <p style="font-size:2.8rem; margin:60px 0; font-weight:800;">
+                Score total : <strong>${(scores[1] || 0) + (scores[2] || 0)} / 20</strong>
+            </p>
+            <div class="actions">
+                <button onclick="location.reload()">Rejouer le quiz</button>
+            </div>
+        </div>
+    `;
+}
+
+// Navigation
+document.getElementById('back-btn').addEventListener('click', () => {
+    document.getElementById('quiz-container').innerHTML = '';
+    document.getElementById('levels-screen').style.display = 'flex';
+    document.getElementById('back-btn').style.display = 'none';
+});
+
+document.getElementById('level1').addEventListener('click', () => startLevel(1));
+
+document.getElementById('level2').addEventListener('click', () => {
+    if (!document.getElementById('level2').classList.contains('disabled')) {
+        startLevel(2);
+    }
+});
+
+document.getElementById('level3').addEventListener('click', () => {
+    if (scores[1] !== null && scores[2] !== null) {
+        showFinalRecap();
+    }
+});
+    </script>
 </body>
 </html>
